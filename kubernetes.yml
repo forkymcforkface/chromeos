@@ -62,6 +62,7 @@ spec:
           claimName: chromeos-pvc
       - hostPath:
           path: /dev/kvm
+          type: CharDevice
         name: dev-kvm
       - hostPath:
           path: /dev/net/tun
