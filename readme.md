@@ -81,6 +81,17 @@ kubectl apply -f https://raw.githubusercontent.com/forkymcforkface/chromeos/main
 
   Subsequent restarts auto-detect the installed state and boot you straight to the Flex login screen.
 
+### How do I password-protect the viewer?
+
+  By default the viewer on port 8006 is open to anyone who can reach it. Set `PROTECT` to require a login (HTTP basic auth). The default credentials are `Docker` / `admin`, so override them with `USERNAME` and `PASSWORD`:
+
+  ```yaml
+  environment:
+    PROTECT: "Y"
+    USERNAME: "admin"
+    PASSWORD: "your-password"
+  ```
+
 ### How do I select the channel?
 
   By default, the stable channel is installed. But you can add the `VERSION` environment variable to your compose file, in order to specify an alternative channel to be downloaded:
@@ -157,6 +168,17 @@ kubectl apply -f https://raw.githubusercontent.com/forkymcforkface/chromeos/main
     RAM_SIZE: "8G"
     CPU_CORES: "4"
   ```
+
+### How do I let the host reclaim unused memory?
+
+  By default the VM holds the full `RAM_SIZE` for its entire lifetime. Set `BALLOONING` to enable dynamic memory ballooning, which lets the host reclaim guest RAM that isn't in use:
+
+  ```yaml
+  environment:
+    BALLOONING: "Y"
+  ```
+
+  The target can be tuned with `BALLOONING_MIN_MEM` (default `33%`) and `BALLOONING_RAM_THRESHOLD` (default `80.0`).
 
 ### How does GPU acceleration work?
 
