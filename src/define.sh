@@ -23,6 +23,11 @@ if [[ "${GPU:-}" =~ ^[Yy] ]]; then
           continue
         fi
       fi
+      if ! { exec 3<"$node"; } 2>/dev/null; then
+        info "Render node $node is not accessible (is the \"c 226:* rwm\" device cgroup rule set?); skipping."
+        continue
+      fi
+      exec 3<&-
       RENDERNODE="$node"
       break
     done
