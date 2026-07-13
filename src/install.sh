@@ -181,7 +181,18 @@ tmp="$FLEX_DIR/extract"
 rm -rf "$tmp"
 mkdir -p "$tmp"
 
-if ! 7z x -y "$zip_dest" -o"$tmp" > /dev/null; then
+extract_size=$(7z l -slt "$zip_dest" 2>/dev/null |
+  awk -F' = ' '/^Size = [0-9]+$/ && $2 > max { max = $2 } END { print max + 0 }')
+
+/run/progress.sh "$tmp" "${extract_size:-0}" "Extracting image ([P])..." &
+
+rc=0
+{ 7z x -y "$zip_dest" -o"$tmp" > /dev/null; rc=$?; } || :
+
+fKill "progress.sh"
+
+if (( rc != 0 )); then
+  rm -rf "$tmp"
   error "Failed to extract $base" && exit 32
 fi
 
