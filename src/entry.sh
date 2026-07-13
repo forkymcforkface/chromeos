@@ -13,6 +13,7 @@ cd /run
 . utils.sh      # Load functions
 . reset.sh      # Initialize system
 . server.sh     # Start webserver
+. define.sh     # ChromeOS parameters
 . install.sh    # Download the image
 . disk.sh       # Initialize disks
 . display.sh    # Initialize graphics
@@ -29,9 +30,9 @@ trap - ERR
 
 cmd=(qemu-system-x86_64)
 version=$("${cmd[@]}" --version | awk 'NR==1 { print $4 }')
-info "Booting $APP using QEMU v$version..." && echo
+info "Booting ChromeOS Flex using QEMU v$version..." && echo
 
-if [[ "$SHUTDOWN" != [Yy1]* ]]; then
+if ! enabled "$SHUTDOWN"; then
   exec "${cmd[@]}" ${ARGS:+ $ARGS}
 fi
 
