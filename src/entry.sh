@@ -4,7 +4,7 @@ set -Eeuo pipefail
 : "${APP:="ChromeOSFlex"}"
 : "${SUPPORT:="https://github.com/forkymcforkface/chromeos"}"
 
-: "${AUDIO:="Y"}"
+: "${AUDIO:="N"}"
 : "${SHUTDOWN:="Y"}"
 : "${TIMEOUT:="115"}"
 : "${PLATFORM:="x64"}"
