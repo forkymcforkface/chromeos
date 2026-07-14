@@ -6,7 +6,7 @@ set -Eeuo pipefail
 
 : "${AUDIO:="Y"}"
 : "${SHUTDOWN:="Y"}"
-: "${TIMEOUT:="60"}"
+: "${TIMEOUT:="115"}"
 : "${PLATFORM:="x64"}"
 : "${BOOT_MODE:="uefi"}"
 
@@ -26,6 +26,7 @@ cd /run
 . power.sh      # Configure shutdown
 . memory.sh     # Check available memory
 . balloon.sh    # Initialize ballooning
+. audio.sh      # Initialize audio
 . config.sh     # Configure arguments
 . finish.sh     # Finish initialization
 
