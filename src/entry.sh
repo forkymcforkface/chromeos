@@ -2,10 +2,13 @@
 set -Eeuo pipefail
 
 : "${APP:="ChromeOSFlex"}"
+: "${SUPPORT:="https://github.com/forkymcforkface/chromeos"}"
+
+: "${AUDIO:="Y"}"
 : "${SHUTDOWN:="Y"}"
 : "${TIMEOUT:="60"}"
 : "${PLATFORM:="x64"}"
-: "${SUPPORT:="https://github.com/forkymcforkface/chromeos"}"
+: "${BOOT_MODE:="uefi"}"
 
 cd /run
 
