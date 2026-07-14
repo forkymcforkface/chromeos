@@ -19,8 +19,8 @@ cd /run
 . define.sh     # ChromeOS parameters
 . install.sh    # Download the image
 . disk.sh       # Initialize disks
-. audio.sh      # Initialize audio
 . display.sh    # Initialize graphics
+. audio.sh      # Initialize audio
 . network.sh    # Initialize network
 . boot.sh       # Configure boot
 . proc.sh       # Initialize processor
