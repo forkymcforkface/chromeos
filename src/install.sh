@@ -269,7 +269,7 @@ mv "$img" "$FLEX_DIR/boot.img"
 rm -rf "$tmp"
 rm -f "$zip_dest"
 
-setOwner "$FLEX_DIR/boot.img" || error "Failed to set owner on installer image"
+setOwner "$FLEX_DIR/boot.img" || warn "failed to set owner on installer image"
 
 BOOT_MODE="uefi"
 BOOT="$FLEX_DIR/boot.img"
