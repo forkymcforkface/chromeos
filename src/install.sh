@@ -103,11 +103,38 @@ if [ -n "$VERSION_FILTER" ]; then
   info "Fetching ChromeOS Flex manifest ($VERSION_LC channel)..."
   html "Fetching manifest..."
 
+  rc=0
+  reason=""
+  log=$(mktemp)
   manifest="$FLEX_DIR/manifest.json"
+
   rm -f "$manifest"
 
-  if ! wget -q --timeout=30 -O "$manifest" "$MANIFEST_URL"; then
-    error "Failed to download manifest from $MANIFEST_URL" && exit 60
+  {
+    LC_ALL=C wget "$MANIFEST_URL" -O "$manifest" --no-verbose --timeout=30 \
+      --no-http-keep-alive --output-file="$log"
+    rc=$?
+  } || :
+
+  if (( rc != 0 )); then
+    reason=$(sed -n \
+      -e 's/^wget: //p' \
+      -e 's/^[0-9-]\{10\} [0-9:]\{8\} ERROR //p' \
+      "$log" | tail -n 1)
+  fi
+
+  rm -f "$log"
+
+  if (( rc == 3 )); then
+    error "Failed to download $MANIFEST_URL because the file could not be written (disk full?)."
+    exit 60
+  elif (( rc != 0 )); then
+    if [ -n "$reason" ]; then
+      error "Failed to download $MANIFEST_URL: ${reason%.}."
+    else
+      error "Failed to download $MANIFEST_URL with exit status $rc."
+    fi
+    exit 60
   fi
 
   if [ ! -s "$manifest" ]; then
@@ -153,22 +180,57 @@ fi
 
 msg="Downloading ChromeOS Flex $version"
 html "$msg..."
+
+rc=0
+reason=""
+log=$(mktemp)
+
 info "Downloading $base..."
 
 rm -f "$zip_dest"
 /run/progress.sh "$zip_dest" "${zipsize:-0}" "$msg ([P])..." &
 
-rc=0
-{ wget "$url" -O "$zip_dest" --continue --timeout=30 --no-http-keep-alive --show-progress "$PROGRESS_FLAG" -q; rc=$?; } || :
+{
+  LC_ALL=C wget "$url" -O "$zip_dest" --continue --no-verbose --timeout=30 \
+    --no-http-keep-alive --show-progress "$PROGRESS_FLAG" \
+    --output-file="$log"
+  rc=$?
+} || :
 
 fKill "progress.sh"
 
-if (( rc != 0 )) || [ ! -s "$zip_dest" ]; then
-  error "Failed to download ChromeOS Flex image (wget rc=$rc)" && exit 60
+if (( rc != 0 )); then
+  reason=$(sed -n \
+    -e 's/^wget: //p' \
+    -e 's/^[0-9-]\{10\} [0-9:]\{8\} ERROR //p' \
+    "$log" | tail -n 1)
+fi
+
+rm -f "$log"
+
+if (( rc == 3 )); then
+  error "Failed to download $url because the file could not be written (disk full?)."
+  exit 60
+elif (( rc != 0 )); then
+  if [ -n "$reason" ]; then
+    error "Failed to download $url: ${reason%.}."
+  else
+    error "Failed to download $url with exit status $rc."
+  fi
+  exit 60
+fi
+
+if [ ! -s "$zip_dest" ]; then
+  error "Failed to download $url: the downloaded file is empty."
+  exit 60
 fi
 
 # Catch silent truncation: a valid Flex recovery zip is always >1GB; <100MB means CDN error page or partial download.
-actual_size=$(stat -c%s "$zip_dest")
+if ! actual_size=$(stat -c%s "$zip_dest"); then
+  error "Failed to determine downloaded file size: $zip_dest"
+  exit 60
+fi
+
 if [ "$actual_size" -lt 100000000 ]; then
   error "Downloaded file is suspiciously small ($actual_size bytes)" && exit 60
 fi
