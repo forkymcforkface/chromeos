@@ -172,10 +172,17 @@ fi
 base="$(basename "${url%%\?*}")"
 zip_dest="$FLEX_DIR/$base"
 
+progress=()
+dotbytes=10485760
+
+# Check if running with interactive TTY or redirected to docker log
 if [ -t 1 ]; then
-  PROGRESS_FLAG="--progress=bar:noscroll"
+  progress=( --progress=bar:noscroll )
 else
-  PROGRESS_FLAG="--progress=dot:giga"
+  if [[ "$zipsize" =~ ^[0-9]+$ ]] && (( zipsize > 0 )); then
+    dotbytes=$(( (zipsize + 199) / 200 ))
+  fi
+  progress=( --progress=dot --execute "dotbytes=$dotbytes" )
 fi
 
 msg="Downloading ChromeOS Flex $version"
@@ -192,7 +199,7 @@ rm -f "$zip_dest"
 
 {
   LC_ALL=C wget "$url" -O "$zip_dest" --continue --no-verbose --timeout=30 \
-    --no-http-keep-alive --show-progress "$PROGRESS_FLAG" \
+    --no-http-keep-alive --show-progress "${progress[@]}" \
     --output-file="$log"
   rc=$?
 } || :
