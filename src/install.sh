@@ -32,7 +32,7 @@ fi
 isInstalledDisk() {
   local table
 
-  [ -s "$DATA_IMG" ] || return 1
+  [ -f "$DATA_IMG" ] && [ -s "$DATA_IMG" ] || return 1
 
   dd if="$DATA_IMG" bs=512 skip=1 count=1 2>/dev/null |
     head -c 8 |
@@ -80,7 +80,11 @@ if isInstalledDisk; then
   return 0
 fi
 
-if [ -s "/boot.img" ]; then
+if [ -d "/boot.img" ]; then
+  error "The bind /boot.img maps to a file that does not exist!" && exit 65
+fi
+
+if [ -f "/boot.img" ] && [ -s "/boot.img" ]; then
   info "Using custom ChromeOS image from /boot.img"
   BOOT="/boot.img"
   STORAGE="$FLEX_DIR"
@@ -89,7 +93,11 @@ if [ -s "/boot.img" ]; then
   return 0
 fi
 
-if [ -s "$FLEX_DIR/boot.img" ]; then
+if [ -d "$FLEX_DIR/boot.img" ]; then
+  error "The path $FLEX_DIR/boot.img is a directory instead of an image file!" && exit 65
+fi
+
+if [ -f "$FLEX_DIR/boot.img" ] && [ -s "$FLEX_DIR/boot.img" ]; then
   info "Reusing existing installer at $FLEX_DIR/boot.img"
   BOOT="$FLEX_DIR/boot.img"
   STORAGE="$FLEX_DIR"
