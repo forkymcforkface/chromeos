@@ -181,16 +181,13 @@ base="$(basename "${url%%\?*}")"
 zip_dest="$FLEX_DIR/$base"
 
 progress=()
-dotbytes=10485760
+output=""
 
-# Check if running with interactive TTY or redirected to docker log
+# Use Wget's progress bar in a terminal and progress.sh in container logs.
 if [ -t 1 ]; then
-  progress=( --progress=bar:noscroll )
+  progress=( --show-progress --progress=bar:noscroll )
 else
-  if [[ "$zipsize" =~ ^[0-9]+$ ]] && (( zipsize > 0 )); then
-    dotbytes=$(( (zipsize + 199) / 200 ))
-  fi
-  progress=( --progress=dot --execute "dotbytes=$dotbytes" )
+  output="log"
 fi
 
 msg="Downloading ChromeOS Flex $version"
@@ -203,11 +200,11 @@ log=$(mktemp)
 info "Downloading $base..."
 
 rm -f "$zip_dest"
-/run/progress.sh "$zip_dest" "${zipsize:-0}" "$msg ([P])..." &
+/run/progress.sh "$zip_dest" "${zipsize:-0}" "$msg ([P])..." "$output" &
 
 {
   LC_ALL=C wget "$url" -O "$zip_dest" --continue --no-verbose --timeout=30 \
-    --no-http-keep-alive --show-progress "${progress[@]}" \
+    --no-http-keep-alive "${progress[@]}" \
     --output-file="$log"
   rc=$?
 } || :
@@ -247,10 +244,12 @@ if ! actual_size=$(stat -c%s "$zip_dest"); then
 fi
 
 if [ "$actual_size" -lt 100000000 ]; then
-  error "Downloaded file is suspiciously small ($actual_size bytes)" && exit 60
+  error "Downloaded file is suspiciously small ($actual_size bytes)"
+  exit 60
 fi
 
 html "Download finished successfully..."
+
 info "Extracting $base..."
 html "Extracting image..."
 
