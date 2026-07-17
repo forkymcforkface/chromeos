@@ -34,7 +34,7 @@ RUN <<'EOF'
     /run/display.sh
 
   sed -i \
-    's|if \[\[ "$CPU_VENDOR" != "GenuineIntel" \]\]; then|if false; then|' \
+    's|if ! enabled "$GPU" || isAmdCpu || \[\[ "$ARCH" != "amd64" \]\]; then|if ! enabled "$GPU" || [[ "$ARCH" != "amd64" ]]; then|' \
     /run/display.sh
 
   sed -i \
@@ -55,8 +55,8 @@ RUN <<'EOF'
     exit 1
   }
 
-  ! grep -q 'GenuineIntel' /run/display.sh || {
-    echo "patch failed: GenuineIntel gate not removed from display.sh" >&2
+  ! grep -q 'isAmdCpu' /run/display.sh || {
+    echo "patch failed: AMD GPU gate not removed from display.sh" >&2
     exit 1
   }
 EOF
