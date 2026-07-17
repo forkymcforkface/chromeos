@@ -40,7 +40,12 @@ if ! enabled "$SHUTDOWN"; then
   exec "${cmd[@]}" ${ARGS:+ $ARGS}
 fi
 
-"${cmd[@]}" ${ARGS:+ $ARGS} &
+if ! interactive; then
+  "${cmd[@]}" ${ARGS:+ $ARGS} &
+else
+  startConsole
+  setsid -w "${cmd[@]}" ${ARGS:+ $ARGS} </dev/null &
+fi
 
 pid=$!
 rc=0
