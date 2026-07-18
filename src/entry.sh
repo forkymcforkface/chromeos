@@ -6,7 +6,7 @@ set -Eeuo pipefail
 
 : "${AUDIO:="N"}"
 : "${SHUTDOWN:="Y"}"
-: "${TIMEOUT:="115"}"
+: "${TIMEOUT:="105"}"
 : "${PLATFORM:="x64"}"
 : "${BOOT_MODE:="uefi"}"
 
