@@ -34,7 +34,7 @@ RUN <<'EOF'
     /run/display.sh
 
   sed -i \
-    's|if ! enabled "$GPU" || isAmdCpu || \[\[ "$ARCH" != "amd64" \]\]; then|if ! enabled "$GPU" || [[ "$ARCH" != "amd64" ]]; then|' \
+    's@if ! enabled "$GPU" || isAmdCpu || \[\[ "$ARCH" != "amd64" \]\]; then@if ! enabled "$GPU" || [[ "$ARCH" != "amd64" ]]; then@' \
     /run/display.sh
 
   sed -i \
