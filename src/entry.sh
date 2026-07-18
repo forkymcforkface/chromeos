@@ -5,6 +5,7 @@ set -Eeuo pipefail
 : "${SUPPORT:="https://github.com/forkymcforkface/chromeos"}"
 
 : "${AUDIO:="N"}"
+: "${LOSSY:="N"}"
 : "${SHUTDOWN:="Y"}"
 : "${TIMEOUT:="105"}"
 : "${PLATFORM:="x64"}"
