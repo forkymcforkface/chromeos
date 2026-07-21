@@ -129,53 +129,14 @@ downloadFile() {
   local message="$3"
   local expected="${4:-0}"
   local connections="${5:-1}"
-  local total size
 
-  if downloadToFile \
-      "$url" \
-      "$dest" \
-      "$message" \
-      "$expected" \
-      "$connections" \
-      "Y"; then
-    return 0
-  fi
-
-  local rc=$?
-  (( rc != 0 )) && return "$rc"
-
-  if [ ! -s "$dest" ]; then
-
-    error "Failed to download $url: the downloaded file is empty."
-
-    if ! rm -f -- "$dest" "$dest.aria2"; then
-      warn "failed to remove invalid download \"$dest\"!"
-    fi
-
-    return 1
-  fi
-
-  if ! total=$(stat -c%s -- "$dest"); then
-    error "Failed to determine downloaded file size: $dest"
-    return 1
-  fi
-
-  size=$(formatBytes "$total") || size="$total bytes"
-
-  # Catch silent truncation: a valid Flex recovery ZIP is always larger than
-  # 1 GB; anything below 100 MB is likely an error page or partial download.
-  if (( total < 100000000 )); then
-
-    error "Downloaded file is suspiciously small: $size"
-
-    if ! rm -f -- "$dest" "$dest.aria2"; then
-      warn "failed to remove invalid download \"$dest\"!"
-    fi
-
-    return 1
-  fi
-
-  return 0
+  downloadToFile \
+    "$url" \
+    "$dest" \
+    "$message" \
+    "$expected" \
+    "$connections" \
+    "Y"
 }
 
 downloadImage() {
@@ -190,17 +151,16 @@ downloadImage() {
 
   info "Downloading $base..."
 
-  if ! downloadRetry \
-      "$dest" \
-      "$connections" \
-      "5" \
-      "$base" \
-      "$url" \
-      "$dest" \
-      "$msg" \
-      "$expected"; then
-    return 1
-  fi
+  downloadRetry \
+    "$dest" \
+    "$connections" \
+    "5" \
+    "$base" \
+    "100000000" \
+    "$url" \
+    "$dest" \
+    "$msg" \
+    "$expected" || return $?
 
   return 0
 }
