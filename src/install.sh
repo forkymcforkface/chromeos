@@ -122,6 +122,89 @@ if [ -f "$FLEX_DIR/boot.img" ] && [ -s "$FLEX_DIR/boot.img" ]; then
   return 0
 fi
 
+downloadFile() {
+
+  local url="$1"
+  local dest="$2"
+  local message="$3"
+  local expected="${4:-0}"
+  local connections="${5:-1}"
+  local total size
+
+  if downloadToFile \
+      "$url" \
+      "$dest" \
+      "$message" \
+      "$expected" \
+      "$connections" \
+      "Y"; then
+    return 0
+  fi
+
+  local rc=$?
+  (( rc != 0 )) && return "$rc"
+
+  if [ ! -s "$dest" ]; then
+
+    error "Failed to download $url: the downloaded file is empty."
+
+    if ! rm -f -- "$dest" "$dest.aria2"; then
+      warn "failed to remove invalid download \"$dest\"!"
+    fi
+
+    return 1
+  fi
+
+  if ! total=$(stat -c%s -- "$dest"); then
+    error "Failed to determine downloaded file size: $dest"
+    return 1
+  fi
+
+  size=$(formatBytes "$total") || size="$total bytes"
+
+  # Catch silent truncation: a valid Flex recovery ZIP is always larger than
+  # 1 GB; anything below 100 MB is likely an error page or partial download.
+  if (( total < 100000000 )); then
+
+    error "Downloaded file is suspiciously small: $size"
+
+    if ! rm -f -- "$dest" "$dest.aria2"; then
+      warn "failed to remove invalid download \"$dest\"!"
+    fi
+
+    return 1
+  fi
+
+  return 0
+}
+
+downloadImage() {
+
+  local url="$1"
+  local dest="$2"
+  local base="$3"
+  local version="$4"
+  local expected="${5:-0}"
+  local connections="${CONNECTIONS:-1}"
+  local msg="Downloading ChromeOS Flex $version"
+
+  info "Downloading $base..."
+
+  if ! downloadRetry \
+      "$dest" \
+      "$connections" \
+      "5" \
+      "$base" \
+      "$url" \
+      "$dest" \
+      "$msg" \
+      "$expected"; then
+    return 1
+  fi
+
+  return 0
+}
+
 zipsize="0"
 
 if [ -n "$VERSION_FILTER" ]; then
@@ -145,7 +228,6 @@ if [ -n "$VERSION_FILTER" ]; then
 
   if [ ! -s "$manifest" ]; then
     rm -f -- "$manifest" "$manifest.aria2"
-
     error "Manifest is empty!"
     exit 60
   fi
@@ -180,83 +262,15 @@ fi
 
 base="$(basename "${url%%\?*}")"
 zip_dest="$FLEX_DIR/$base"
-connections="${CONNECTIONS:-1}"
-msg="Downloading ChromeOS Flex $version"
 
-info "Downloading $base..."
-
-# Always start without stale partial or aria control files.
-rm -f -- "$zip_dest" "$zip_dest.aria2"
-
-download_rc=0
-
-if downloadToFile \
+if ! downloadImage \
     "$url" \
     "$zip_dest" \
-    "$msg" \
-    "${zipsize:-0}" \
-    "$connections" \
-    "Y"; then
-
-  download_rc=0
-else
-  download_rc=$?
-fi
-
-if (( download_rc != 0 )); then
-
-  # Status 2 indicates invalid helper arguments, such as an invalid
-  # connection count, which cannot be resolved by retrying.
-  if (( download_rc == 2 )); then
-    rm -f -- "$zip_dest" "$zip_dest.aria2"
-    exit 60
-  fi
-
-  delay 5
-
-  # A multi-connection partial file can contain non-sequential ranges and
-  # cannot safely be resumed by Wget.
-  if [[ "$connections" =~ ^[1-9][0-9]*$ ]] && (( connections > 1 )); then
-    if ! rm -f -- "$zip_dest" "$zip_dest.aria2"; then
-      error "Failed to remove partial download \"$zip_dest\"!"
-      exit 60
-    fi
-  fi
-
-  info "Retrying $base with a single connection..."
-
-  # Retry using single-connection Wget.
-  if ! downloadToFile \
-      "$url" \
-      "$zip_dest" \
-      "$msg" \
-      "${zipsize:-0}" \
-      "1" \
-      "Y"; then
-
-    rm -f -- "$zip_dest" "$zip_dest.aria2"
-    exit 60
-  fi
-fi
-
-if [ ! -s "$zip_dest" ]; then
-  error "Failed to download $url: the downloaded file is empty."
+    "$base" \
+    "$version" \
+    "${zipsize:-0}"; then
   exit 60
 fi
-
-# Catch silent truncation: a valid Flex recovery ZIP is always larger than
-# 1 GB; anything below 100 MB is likely an error page or partial download.
-if ! actual_size=$(stat -c%s -- "$zip_dest"); then
-  error "Failed to determine downloaded file size: $zip_dest"
-  exit 60
-fi
-
-if (( actual_size < 100000000 )); then
-  error "Downloaded file is suspiciously small ($actual_size bytes)"
-  exit 60
-fi
-
-html "Download finished successfully..."
 
 info "Extracting $base..."
 html "Extracting image..."
