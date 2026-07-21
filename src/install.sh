@@ -7,22 +7,6 @@ set -Eeuo pipefail
 VERSION_LC="${VERSION,,}"
 VERSION_FILTER=""
 
-delay() {
-
-  local i
-  local seconds="$1"
-  local msg="Retrying failed download in X seconds..."
-
-  info "${msg/X/$seconds}"
-
-  for i in $(seq "$seconds" -1 1); do
-    html "${msg/X/$i}"
-    sleep 1
-  done
-
-  return 0
-}
-
 # VERSION can be a channel name (stable/beta/ltc/ltr) or a direct image URL.
 if [[ "$VERSION_LC" =~ ^https?:// ]]; then
   url="$VERSION"
