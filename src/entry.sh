@@ -10,6 +10,7 @@ set -Eeuo pipefail
 : "${TIMEOUT:="105"}"
 : "${PLATFORM:="x64"}"
 : "${BOOT_MODE:="uefi"}"
+: "${RAM_MINIMUM:="4G"}"
 
 cd /run
 
