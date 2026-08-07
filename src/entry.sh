@@ -10,12 +10,14 @@ set -Eeuo pipefail
 : "${TIMEOUT:="105"}"
 : "${PLATFORM:="x64"}"
 : "${BOOT_MODE:="uefi"}"
+: "${RAM_MINIMUM:="2G"}"
 
 cd /run
 
 . start.sh      # Startup hook
 . utils.sh      # Load functions
-. reset.sh      # Initialize system
+. init.sh       # Initialize system
+. memory.sh     # Check memory
 . server.sh     # Start webserver
 . define.sh     # ChromeOS parameters
 . install.sh    # Download the image
@@ -26,7 +28,6 @@ cd /run
 . boot.sh       # Configure boot
 . proc.sh       # Initialize processor
 . power.sh      # Configure shutdown
-. memory.sh     # Check available memory
 . balloon.sh    # Initialize ballooning
 . config.sh     # Configure arguments
 . finish.sh     # Finish initialization
