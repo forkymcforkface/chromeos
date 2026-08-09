@@ -11,6 +11,7 @@ set -Eeuo pipefail
 : "${PLATFORM:="x64"}"
 : "${BOOT_MODE:="uefi"}"
 : "${RAM_MINIMUM:="2G"}"
+: "${DISK_MINIMUM:="16G"}"
 
 cd /run
 
